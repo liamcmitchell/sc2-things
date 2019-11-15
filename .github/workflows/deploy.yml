@@ -13,11 +13,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v1
 
-      - name: Build and Deploy
-        uses: JamesIves/github-pages-deploy-action@releases/v2
+      - name: Setup Node
+        uses: actions/setup-node@v1
+        with:
+          node-version: "12.x"
+
+      - name: Build
+        run: npm install && npm run build
+
+      - name: Deploy
+        uses: peaceiris/actions-gh-pages@v2.5.0
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BRANCH: gh-pages
-          FOLDER: build
-          BUILD_SCRIPT: npm install && npm run-script build
-          CNAME: sc2-things.liam.geek.nz
+          ACTIONS_DEPLOY_KEY: ${{ secrets.ACTIONS_DEPLOY_KEY }}
+          PUBLISH_BRANCH: gh-pages
+          PUBLISH_DIR: ./build

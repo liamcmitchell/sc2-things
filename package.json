@@ -2,7 +2,7 @@
   "name": "sc2-things",
   "version": "0.1.0",
   "private": true,
-  "homepage": "http://liamcmitchell.github.io/sc2-things",
+  "homepage": "http://sc2-things.liam.geek.nz/",
   "dependencies": {
     "husky": "^3.0.9",
     "lint-staged": "^9.4.3",

@@ -20,3 +20,4 @@ jobs:
           BRANCH: gh-pages
           FOLDER: build
           BUILD_SCRIPT: npm install && npm run-script build
+          CNAME: sc2-things.liam.geek.nz

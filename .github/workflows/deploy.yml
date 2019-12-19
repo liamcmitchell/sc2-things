@@ -19,7 +19,7 @@ jobs:
           node-version: "12.x"
 
       - name: Build
-        run: npm install && npm run build
+        run: npm install && npm run update-data && npm run build
 
       - name: Deploy
         uses: peaceiris/actions-gh-pages@v2.5.0

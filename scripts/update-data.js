@@ -113,7 +113,11 @@ const writeData = async (file, data) => {
 };
 
 const main = async () => {
-  const data = await Promise.all([readData("UnitData"), readData("AbilData")]);
+  const data = await Promise.all([
+    readData("UnitData"),
+    readData("AbilData"),
+    readData("ButtonData")
+  ]);
   await writeData(`../src/data.json`, Object.assign({}, ...data));
 };
 

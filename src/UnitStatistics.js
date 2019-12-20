@@ -1,6 +1,7 @@
 import React from "react";
 import data from "./data.json";
 import { mapObjIndexed } from "ramda";
+import Icon from "./Icon.js";
 
 const nameToId = (name) => name.replace(" ", "");
 
@@ -87,6 +88,7 @@ const units = liquipediaProtossUnits
     } = unit;
 
     const row = {
+      Icon: <Icon id={id} />,
       Unit: idToName(id),
       Supply: -Food,
       Minerals: Minerals,

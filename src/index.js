@@ -3,6 +3,10 @@ import ReactDOM from "react-dom";
 import "./index.css";
 import App from "./App";
 import * as serviceWorker from "./serviceWorker";
+import data from "./data.json";
+
+// Log data so we can inspect in dev tools.
+console.log(data);
 
 ReactDOM.render(<App />, document.getElementById("root"));
 

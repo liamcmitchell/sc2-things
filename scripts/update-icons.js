@@ -1,5 +1,5 @@
 import path from "path";
-import { writeFile, existsSync } from "fs";
+import { writeFile } from "fs";
 import { promisify } from "util";
 import { fromPairs } from "ramda";
 import Spritesmith from "spritesmith";
@@ -33,13 +33,8 @@ const createSprite = (params) =>
 // https://github.com/Talv/stormex
 // Something like `stormex '/mnt/s1/BnetGameLib/StarCraft II' -s 'btn-' -o 'buttons'`
 // Then converted to PNG using XnConvert https://www.xnview.com/en/xnconvert/
-// Images should all be in one directory after conversion.
-// Pass this directory as the first argument to this script.
-const assetDir = process.argv[2];
-if (!existsSync(assetDir)) {
-  console.error("Provide asset dir as an argument");
-  process.exit(1);
-}
+// Images should all be in assets directory after conversion.
+const assetDir = `${__dirname}/../assets`;
 
 const writeData = async (file, data) => {
   await writeFilePromise(
@@ -68,6 +63,7 @@ const abilIcons = (CAbil) => {
 const main = async () => {
   const data = require("../src/data.json");
 
+  // TODO: Get icons from dependency tree.
   const icons = uniq([
     ...abilIcons(data.CAbilTrain),
     ...abilIcons(data.CAbilMorph),
@@ -101,28 +97,9 @@ const main = async () => {
   );
 
   const { image, coordinates } = await createSprite({
-    src: uniq(Object.values(iconFilenames))
+    src: uniq(Object.values(iconFilenames)),
+    exportOpts: { format: "jpg" }
   });
-
-  // Set black background and convert to JPG.
-  const imageData = await getPixelsPromise(image, "image/png");
-  const [nx, ny] = imageData.shape;
-  for (let x = 0; x < nx; ++x) {
-    for (let y = 0; y < ny; ++y) {
-      for (let channel = 0; channel < 3; ++channel) {
-        imageData.set(
-          x,
-          y,
-          channel,
-          // Multiply current value by opacity.
-          imageData.get(x, y, channel) * (imageData.get(x, y, 3) / 255)
-        );
-      }
-    }
-  }
-  const jpgImage = await streamToPromise(
-    savePixels(imageData, "jpg", { quality: 80 })
-  );
 
   // Convert map of filenames to a map of {[id]: [x, y, width, height]}.
   const iconCoordinates = mapObjIndexed((filename, id) => {
@@ -134,7 +111,7 @@ const main = async () => {
   }, iconFilenames);
 
   await Promise.all([
-    writeFilePromise(`${__dirname}/../public/icons.jpg`, jpgImage),
+    writeFilePromise(`${__dirname}/../public/icons.jpg`, image),
     writeData(`${__dirname}/../src/icons.json`, iconCoordinates)
   ]);
 };

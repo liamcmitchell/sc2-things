@@ -7,6 +7,8 @@
 
 # data
 /src/data.json
+/src/icons.json
+/public/icons.jpg
 
 # testing
 /coverage

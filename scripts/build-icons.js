@@ -5,21 +5,11 @@ import { fromPairs } from "ramda";
 import Spritesmith from "spritesmith";
 import { uniq } from "ramda";
 import { mapObjIndexed } from "ramda";
-import getPixels from "get-pixels";
-import savePixels from "save-pixels";
-import concat from "concat-stream";
 
 // This is to prepare an image sprite containing all necessary icons.
 // https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Images/Implementing_image_sprites_in_CSS
 
-const getPixelsPromise = promisify(getPixels);
 const writeFilePromise = promisify(writeFile);
-
-const streamToPromise = (stream) =>
-  new Promise((resolve, reject) => {
-    stream.on("error", reject);
-    stream.pipe(concat({ encoding: "buffer" }, resolve));
-  });
 
 const createSprite = (params) =>
   new Promise((resolve, reject) => {

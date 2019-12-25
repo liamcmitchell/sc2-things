@@ -4,27 +4,31 @@
   "private": true,
   "homepage": "http://sc2-things.liam.geek.nz/",
   "dependencies": {
-    "@babel/node": "^7.7.0",
-    "@babel/preset-env": "^7.7.1",
-    "@types/ramda": "^0.26.36",
+    "@babel/node": "^7.7.7",
+    "@babel/preset-env": "^7.7.7",
+    "@types/ramda": "^0.26.38",
     "axios": "^0.19.0",
-    "husky": "^3.0.9",
-    "lint-staged": "^9.4.3",
+    "husky": "^3.1.0",
+    "lint-staged": "^9.5.0",
+    "npm-run-all": "^4.1.5",
     "prettier": "^1.19.1",
     "ramda": "^0.26.1",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
-    "react-scripts": "3.2.0",
+    "react-scripts": "^3.3.0",
     "spritesmith": "^3.4.0",
-    "xml2js": "^0.4.22"
+    "xml2js": "^0.4.23"
   },
   "scripts": {
-    "prestart": "babel-node scripts/update-data.js",
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject",
-    "update-data": "babel-node scripts/update-data.js"
+    "start": "run-s build:data build:icons start:client",
+    "start:client": "react-scripts start",
+    "build": "run-s build:data build:icons build:client",
+    "build:data": "babel-node scripts/build-data.js",
+    "build:icons": "babel-node scripts/build-icons.js",
+    "build:client": "react-scripts build",
+    "test": "run-s build test",
+    "test:jest": "react-scripts test",
+    "eject": "react-scripts eject"
   },
   "eslintConfig": {
     "extends": "react-app"

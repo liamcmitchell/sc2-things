@@ -5,6 +5,7 @@ import { fromPairs } from "ramda";
 import Spritesmith from "spritesmith";
 import { uniq } from "ramda";
 import { mapObjIndexed } from "ramda";
+import { getAllPossibleUnits, getUnitAbils } from "../src/data.js";
 
 // This is to prepare an image sprite containing all necessary icons.
 // https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Images/Implementing_image_sprites_in_CSS
@@ -99,6 +100,33 @@ const main = async () => {
 
     return [x, y, width, height];
   }, iconFilenames);
+
+  // Link unit IDs (most icons are linked through abilities).
+  getAllPossibleUnits(["Nexus", "CommandCenter", "Hatchery", "Larva"]).forEach(
+    (id) => {
+      for (const { Unit, DefaultButtonFace } of getUnitAbils(id)) {
+        const unitId = Array.isArray(Unit) ? Unit[0] : Unit;
+        if (
+          unitId &&
+          DefaultButtonFace &&
+          !iconCoordinates[unitId] &&
+          iconCoordinates[DefaultButtonFace]
+        ) {
+          iconCoordinates[unitId] = iconCoordinates[DefaultButtonFace];
+          return;
+        }
+      }
+      // Or maybe we can find one.
+      if (!iconCoordinates[id]) {
+        const match = Object.keys(iconCoordinates).find((key) =>
+          key.toLowerCase().includes(id.toLowerCase())
+        );
+        if (match) {
+          iconCoordinates[id] = iconCoordinates[match];
+        }
+      }
+    }
+  );
 
   await Promise.all([
     writeFilePromise(`${__dirname}/../public/icons.jpg`, image),

@@ -2,7 +2,14 @@ import path from "path";
 import { writeFile } from "fs";
 import { parseStringPromise } from "xml2js";
 import { promisify } from "util";
-import { mapObjIndexed, fromPairs, keys, values, mergeDeepRight } from "ramda";
+import {
+  mapObjIndexed,
+  keys,
+  map,
+  mergeDeepWith,
+  fromPairs,
+  mergeDeepWithKey
+} from "ramda";
 import axios from "axios";
 
 const writeFilePromise = promisify(writeFile);
@@ -16,63 +23,93 @@ const preferNumber = (value) => {
   return value;
 };
 
-// Transforms arrays of nodes into object using any available key.
-// [{index: "x"}] -> {x: {index: "x"}}
-// [{value: 1}] -> {"0": {value: 1}}
-const xmlNodesToTree = (nodes) => {
-  return fromPairs(
-    nodes
-      .map(xmlNodeToTree)
-      .map((node, i) => [node.id || node.index || i, node])
-  );
-};
-
 // Flattens node attributes.
 // {$: {id: "1"}, Speed: [...]} -> {id: 1, Speed: [...]}
-const xmlNodeToTree = ({ $, ...children }) => ({
+const flattenAtributes = ({ $, ...children }) => ({
   ...mapObjIndexed(preferNumber, $),
-  ...mapObjIndexed(xmlNodesToTree, children)
+  ...mapObjIndexed(flattenNodes, children)
 });
 
-// Flatten the full XML tree to something more usable like:
-//  {"0": {value: "1"}} -> [1]
-const flattenTree = mapObjIndexed((value, index) => {
+const flattenNodes = map(flattenAtributes);
+
+// Merge one file into another, taking care to match id & index.
+// The logic for this is crazy. #FuckXML
+const mergeDeepUsingIndexes = mergeDeepWithKey((key, l, r) => {
+  if (l === undefined || !Array.isArray(l)) return r;
+
+  const array = l ? [...l] : [];
+
+  for (const item of r) {
+    const targetIndex = item.hasOwnProperty("id")
+      ? array.findIndex(({ id }) => id === item.id)
+      : typeof item.index === "string"
+      ? array.findIndex(({ index }) => index === item.index)
+      : item.hasOwnProperty("index")
+      ? item.index
+      : key.endsWith("Array") || key === "LayoutButtons"
+      ? -1
+      : 0;
+
+    if (targetIndex === -1 && item.removed !== 1) {
+      array.push(item);
+    } else if (item.removed === 1) {
+      array.splice(targetIndex, 1);
+    } else {
+      array[targetIndex] = mergeDeepUsingIndexes(array[targetIndex], item);
+    }
+  }
+
+  return array;
+});
+
+// Flatten the full tree to something more usable like:
+//  [{value: "1"}] -> [1]
+const flattenTree = (value) => {
   if (typeof value !== "object") return value;
 
-  // Removed (<GlossaryStrongArray index="0" removed="1"/>).
-  if (value.removed === 1) return undefined;
+  // Plain objects
+  if (!Array.isArray(value)) {
+    // Simple values (<LifeMax value="550"/>).
+    if (keys(value).length === 1 && value.hasOwnProperty("value")) {
+      return value.value;
+    }
+
+    return mapObjIndexed(flattenTree, value);
+  }
 
   // Simple one-off values (<LifeMax value="550"/>).
   if (
-    value["0"] &&
-    keys(value).length === 1 &&
-    keys(value["0"]).length === 1 &&
-    value["0"].hasOwnProperty("value")
+    value[0] &&
+    value.length === 1 &&
+    keys(value[0]).length === 1 &&
+    value[0].hasOwnProperty("value")
   ) {
-    return value["0"].value;
+    return value[0].value;
   }
 
-  // Arrays (<AbilArray Link="stop"/>).
-  if (
-    value["0"] &&
-    !keys(value)
-      .map(Number)
-      .some(isNaN)
-  ) {
-    return values(flattenTree(value)).filter(Boolean);
+  // Deleted
+  if (value.some(({ deleted }) => deleted === 1)) {
+    return flattenTree(value.filter(({ deleted }) => deleted !== 1));
   }
 
-  // Simple and indexed values (<CostResource index="Minerals" value="150"/>).
-  if (
-    value.hasOwnProperty("value") &&
-    (keys(value).length === 1 ||
-      (keys(value).length === 2 && String(value.index) === index))
-  ) {
-    return value.value;
+  // Empty arrays (from deletions).
+  if (value.length === 0) return undefined;
+
+  // ID indexed values.
+  if (value[0].id) {
+    return fromPairs(value.map((item) => [item.id, flattenTree(item)]));
   }
 
-  return flattenTree(value);
-});
+  // String indexed values (<CostResource index="Minerals" value="150"/>).
+  if (typeof value[0].index === "string") {
+    return fromPairs(
+      value.map(({ index, ...rest }) => [index, flattenTree(rest, index)])
+    );
+  }
+
+  // Remove any remaining index.
+  return value.map(({ index, ...rest }) => flattenTree(rest, index));
+};
 
 const readData = async (file) => {
   // Data for LOTV multi is made from merging multiple data files.
@@ -95,13 +132,8 @@ const readData = async (file) => {
     })
   );
 
-  const tree = xmlData
-    // Turn XML into object tree (no arrays)
-    .map(xmlNodeToTree)
-    // so we can merge the files together.
-    .reduce(mergeDeepRight);
+  const tree = xmlData.map(flattenAtributes).reduce(mergeDeepUsingIndexes);
 
-  // Then we try to flatten the object tree as much as possible.
   return flattenTree(tree);
 };
 

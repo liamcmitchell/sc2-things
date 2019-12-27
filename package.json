@@ -15,6 +15,7 @@
     "ramda": "^0.26.1",
     "react": "^16.12.0",
     "react-dom": "^16.12.0",
+    "react-router-dom": "^5.1.2",
     "react-scripts": "^3.3.0",
     "spritesmith": "^3.4.0",
     "xml2js": "^0.4.23"
@@ -26,7 +27,7 @@
     "build:data": "babel-node scripts/build-data.js",
     "build:icons": "babel-node scripts/build-icons.js",
     "build:client": "react-scripts build",
-    "test": "run-s build test",
+    "test": "run-s build test:jest",
     "test:jest": "react-scripts test",
     "eject": "react-scripts eject"
   },

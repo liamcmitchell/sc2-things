@@ -1,19 +1,11 @@
 import React from "react";
-import data from "./data.json";
 import { mapObjIndexed } from "ramda";
 import Icon from "./Icon.js";
+import { trainTime, getUnit } from "./data.js";
 
 const nameToId = (name) => name.replace(" ", "");
 
 const idToName = (id) => id.replace(/([a-z])([A-Z])/, "$1 $2");
-
-const trainTime = (unit) => {
-  for (const { InfoArray } of Object.values(data.CAbilTrain)) {
-    for (const { Unit, Time } of Object.values(InfoArray)) {
-      if (Unit === unit) return Time;
-    }
-  }
-};
 
 // Faster is normal * 1.4.
 const fasterTime = (time) =>
@@ -72,7 +64,7 @@ const liquipediaProtossUnits = [
 
 const units = liquipediaProtossUnits
   .map((liquipediaUnit) => {
-    const unit = data.CUnit[liquipediaUnit.id];
+    const unit = getUnit(liquipediaUnit.id);
 
     if (!unit) return null;
 

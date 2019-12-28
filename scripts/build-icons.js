@@ -78,10 +78,9 @@ const main = async () => {
 
         return [
           id,
-          Icon.replace("Assets\\Textures\\", `${assetDir}/`).replace(
-            ".dds",
-            ".png"
-          )
+          Icon.toLowerCase()
+            .replace("assets\\textures\\", `${assetDir}/`)
+            .replace(".dds", ".png")
         ];
       })
       .filter(Boolean)
